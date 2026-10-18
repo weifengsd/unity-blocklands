@@ -38,6 +38,8 @@ public static class ProjectTools
     public static void SelfCheck()
     {
         Prepare();
+        // A fresh clone has no ignored Verification directory yet.
+        Directory.CreateDirectory("Verification");
         var go=new GameObject("Validation world");var world=go.AddComponent<VoxelWorld>();
         try
         {
