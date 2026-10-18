@@ -1,0 +1,10 @@
+using System.Collections.Generic;
+using UnityEngine;
+namespace Blocklands {public partial class RegionActivities {
+ public float Remaining=>remaining;
+ void BuildCompactFireflies(){var candidates=new List<Vector3>();for(int x=-5;x<=5;x++)for(int z=-5;z<=5;z++){if(x*x+z*z>25||x*x+z*z<3)continue;Vector3 p=Ground(board+new Vector3(x,0,z));if(Mathf.Abs(p.y-board.y)>3)continue;bool clear=true;for(int h=0;h<3;h++)clear&=game.World.Get(Vector3Int.FloorToInt(p+Vector3.up*(h+.1f)))==Block.Air;if(clear)candidates.Add(p+Vector3.up*1.1f);}
+  candidates.Sort((a,b)=>(Vector3.Distance(a,board)+Mathf.Abs(a.y-board.y)*2).CompareTo(Vector3.Distance(b,board)+Mathf.Abs(b.y-board.y)*2));var chosen=new List<Vector3>();foreach(var p in candidates){bool spaced=true;foreach(var other in chosen)if(Vector3.Distance(p,other)<1.5f)spaced=false;if(spaced)chosen.Add(p);if(chosen.Count==8)break;}foreach(var p in candidates){if(chosen.Count==8)break;if(!chosen.Contains(p))chosen.Add(p);}while(chosen.Count<8){float a=chosen.Count*Mathf.PI/4;chosen.Add(board+new Vector3(Mathf.Sin(a)*2,1.2f,Mathf.Cos(a)*2));}
+  for(int i=0;i<8;i++){AddMarker(chosen[i],new Color(1,.9f,.24f),"萤火虫 "+(i+1));var light=markers[i].gameObject.AddComponent<Light>();light.color=new Color(1,.84f,.18f);light.range=3;light.intensity=.7f;}
+ }
+ void DrawFireflyHints(){if(region!=0||!running)return;var style=new GUIStyle(GUI.skin.label){fontSize=16,fontStyle=FontStyle.Bold,alignment=TextAnchor.MiddleCenter};style.normal.textColor=new Color(1,.93f,.35f);for(int i=0;i<markers.Count;i++){if(found.Contains(i))continue;Vector3 screen=game.Player.View.WorldToScreenPoint(markers[i].position);float distance=Vector3.Distance(game.Player.transform.position,markers[i].position);string label=(i+1)+"号 · "+Mathf.CeilToInt(distance)+"米";float x,y;if(screen.z<=0){x=Screen.width*.5f+(i-3.5f)*85;y=Screen.height-180;label="身后 "+label;}else{x=Mathf.Clamp(screen.x,60,Screen.width-60);y=Mathf.Clamp(Screen.height-screen.y-24,75,Screen.height-180);}GUI.Label(new Rect(x-65,y,130,26),label,style);}}
+}}

@@ -1,0 +1,50 @@
+# Public repository allowlist. Local development notes, evidence and saves stay local.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/LICENSE
+!/THIRD_PARTY_NOTICES.md
+!/Assets/
+!/Native/
+!/Packages/
+!/ProjectSettings/
+!/Docs/
+
+# Unity/editor caches, build products and local account settings.
+/Library/
+/Temp/
+/Obj/
+/Logs/
+/UserSettings/
+/Builds/
+/Verification/
+.DS_Store
+*.csproj
+*.sln
+*.slnx
+*.user
+*.log
+*.tmp
+*.bak
+
+# Rebuild the optional macOS voice bridge from Native/ source.
+/Assets/Plugins/*.dylib
+/Assets/Plugins/*.dylib.meta
+
+# Pre-generated speech is not included without redistribution provenance.
+/Assets/Resources/*.aiff
+/Assets/Resources/*.aiff.meta
+
+# Never publish credentials, private keys, player saves or local security data.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.mobileprovision
+blocklands-world*.json
+**/credentials.json
+**/id_rsa
+**/id_ed25519

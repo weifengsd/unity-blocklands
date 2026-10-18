@@ -1,0 +1,28 @@
+using System.Collections;using System.Collections.Generic;using System.IO;using UnityEngine;
+namespace Blocklands
+{
+    public class MagicProbeActor:CombatActor {public float DamageTaken;public override string Caption=>"测试靶";public override void Hit(float damage){DamageTaken+=damage;}}
+    public partial class SmokeTest
+    {
+        IEnumerator InvitationItemChecks(Sandbox g,string folder)
+        {
+            var rows=new List<string>();void Check(string k,bool ok){rows.Add(k+"="+ok);adventurePass&=ok;File.WriteAllLines(Path.Combine(folder,"invitation-item-checks.txt"),rows);}
+            g.Respawn();g.Drawing.Clear();g.MadeInvitations.Clear();g.InvitationDesigns.Clear();g.Inventory[93]=0;g.Inventory[91]=g.Inventory[92]=0;
+            g.InvitationTitle="亲手画的邀请";g.InvitationDetails="来一起玩球";g.InvitationGuests=3;g.OpenLifeWorkshop();g.AddDrawingPoint(new Vector2(.2f,.3f),true);g.AddDrawingPoint(new Vector2(.7f,.7f),false);
+            Check("drawing_needs_no_consumable_paper_or_pencil",g.Drawing.Count==1&&g.Inventory[91]==0&&g.Inventory[92]==0);
+            Check("one_press_makes_one_card",g.CreateInvitationCard()&&g.InvitationCount==1);Check("another_press_adds_exactly_one",g.CreateInvitationCard()&&g.InvitationCount==2);
+            Check("same_artwork_shares_saved_design",g.InvitationDesigns.Count==1);g.InvitationTitle="第二张画稿";g.AddDrawingPoint(new Vector2(.3f,.8f),true);g.AddDrawingPoint(new Vector2(.6f,.2f),false);g.CreateInvitationCard();Check("earlier_cards_keep_original_artwork",g.InvitationDesigns.Count==2&&g.CurrentHeldInvitation.title=="亲手画的邀请"&&g.CurrentHeldInvitation.drawing.Count==1);
+            Check("drawing_tools_and_cards_are_not_in_bag",System.Array.IndexOf(Blocks.BagItems,91)<0&&System.Array.IndexOf(Blocks.BagItems,92)<0&&System.Array.IndexOf(Blocks.BagItems,93)<0);
+            Check("cards_are_pinned_to_front_quick_bar",g.QuickItems[8]==93);Check("hold_card_closes_workshop",g.HoldInvitation()&&g.Selected==93&&!g.Paused&&!g.LifeWorkshopOpen);g.Player.RefreshHeldItem();Check("card_is_visible_in_hand",g.Player.VisibleHeldItemId==93);yield return null;ScenePicture(g,Path.Combine(folder,"held-invitation.png"));
+            g.Save();g.Load();g.SetPaused(false);yield return null;Check("cards_designs_and_quick_bar_survive_reload",g.InvitationCount==3&&g.InvitationDesigns.Count==2&&g.QuickItems[8]==93&&g.CurrentHeldInvitation.title=="亲手画的邀请");
+            g.RoyalIdentity=true;g.TravelTo(6);yield return null;NeighbourSpeech child=null;foreach(var n in FindObjectsByType<NeighbourSpeech>())if(n.Kind==NeighbourSpeechKind.CastleEnvy){child=n;break;}g.Player.Teleport(child.transform.position+Vector3.back*2);g.Player.View.transform.LookAt(child.transform.position+Vector3.up);g.SelectItem(1);g.CloseInvitationSticker();Physics.SyncTransforms();Check("enter_opens_yellow_strip_only_on_request",g.TryPersonEnter()&&g.StickerOpen);g.SubmitInvitationSticker("可以");Check("consent_keeps_children_and_small_he_separate",g.InvitedChildCount==1);
+            Transform recipient=g.PartyMembers()[g.PartyMembers().Count-1];g.SelectItem(93);int before=g.InvitationCount;g.Player.Teleport(recipient.position+Vector3.back*2);g.Player.View.transform.LookAt(recipient.position+Vector3.up);Check("hand_delivery_consumes_only_one_card",g.DeliverInvitationTo(recipient)&&g.InvitationCount==before-1);yield return new WaitForSecondsRealtime(.5f);Check("visible_handoff_animation_exists",FindObjectsByType<InvitationHandoff>().Length==1);g.Player.View.transform.LookAt(recipient.position+Vector3.up);ScenePicture(g,Path.Combine(folder,"giving-invitation.png"));Check("delivery_does_not_cancel_existing_handholding",g.InvitedChildCount==1);
+            g.Player.Teleport(new Vector3(80,40,80));g.Player.SetFlying(true);before=g.InvitationCount;Check("far_delivery_does_not_spend_card",!g.DeliverInvitationTo(recipient)&&g.InvitationCount==before);
+            int[] items={8,58,18,35,85,90,41,42,51,40,39,57,13,74,81,63,54};bool visible=true;foreach(int id in items){g.Inventory[id]=Mathf.Max(1,g.Inventory[id]);g.SelectItem(id);g.Player.RefreshHeldItem();visible&=g.Player.VisibleHeldItemId==id;yield return null;}Check("blocks_money_tools_weapons_food_and_gear_all_show_in_hand",visible);
+            g.SelectItem(58);g.Player.RefreshHeldItem();ScenePicture(g,Path.Combine(folder,"held-paper-money.png"));g.SelectItem(85);g.Player.RefreshHeldItem();ScenePicture(g,Path.Combine(folder,"held-crystal-wand.png"));
+            g.Inventory[80]=26;g.Inventory[13]=1;Check("materials_can_become_whole_alloy_set",g.CraftArmorSet(true)&&g.Inventory[80]==0);Check("whole_alloy_set_can_be_worn",g.WearArmorSet(true)&&g.ArmorScore==8);
+            g.Inventory[78]=25;g.Inventory[74]=1;g.Inventory[13]=1;Check("whole_crystal_set_includes_wand",g.CraftArmorSet(false)&&g.Inventory[85]>=1);Check("whole_crystal_set_can_be_worn",g.WearArmorSet(false)&&g.ArmorScore==4);
+            g.Player.Teleport(new Vector3(85,45,80));g.Player.SetFlying(true);g.SelectItem(85);var target=new GameObject("magic test target");target.transform.position=new Vector3(85,46.65f,85);target.AddComponent<BoxCollider>().size=Vector3.one;var probe=target.AddComponent<MagicProbeActor>();Physics.SyncTransforms();g.Player.View.transform.LookAt(target.transform.position);Check("wand_emits_real_blue_projectile",g.FireCrystalMagic()&&FindObjectsByType<CrystalMagicBolt>().Length>0);Check("wand_has_repeat_fire_cooldown",!g.FireCrystalMagic());yield return new WaitForSecondsRealtime(.45f);Check("blue_magic_hits_and_damages_target",probe.DamageTaken==6);g.SetPaused(true);Check("paused_game_cannot_fire_magic",!g.FireCrystalMagic());g.SetPaused(false);Destroy(target);g.TravelTo(0);
+        }
+    }
+}

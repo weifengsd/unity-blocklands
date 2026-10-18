@@ -1,0 +1,11 @@
+using System.Collections;using System.Collections.Generic;using System.IO;using UnityEngine;
+namespace Blocklands {public partial class SmokeTest
+{
+    IEnumerator DroneEntryChecks(Sandbox g,string folder)
+    {
+        var rows=new List<string>();void Check(string k,bool ok){rows.Add(k+"="+ok);adventurePass&=ok;File.WriteAllLines(Path.Combine(folder,"drone-entry-checks.txt"),rows);}
+        g.Respawn();g.TravelTo(1);yield return null;Check("build_first_floor_base",g.CreateCompleteSecretBase());var h=g.FindSecretHome();g.Player.Teleport(new Vector3(h.x+5,h.y-3,h.z+5));Check("H_monitor_keeps_tsunami_view",g.OpenSecretMonitor(h)&&g.SecretMonitorTexture!=null);Vector3 player=g.Player.transform.position;Check("H_monitor_can_open_drone_without_floor_two",g.OpenDroneFromMonitor()&&g.DronePanelOpen&&!g.SecretMonitorOpen&&g.DroneTexture!=null);Check("must_explicitly_begin_drone_control",!g.DroneControlActive&&g.BeginDroneControl());g.DroneStep(Vector2.up,1,0,.1f);Check("drone_moves_but_player_stays_in_base",g.Player.transform.position==player);
+        Villager adult=null;foreach(var v in FindObjectsByType<Villager>())if(!v.IsFriend&&v.ResidentId==0)adult=v;g.PlaceDroneForSmoke(adult.transform.position+Vector3.back*4+Vector3.up*1.2f,adult.transform.position+Vector3.up);int hits=adult.RepelHits;Check("drone_screen_attack_hits_villager",g.DroneSignal(new Vector2(.5f,.5f))&&adult.RepelHits==hits+1);Check("hit_villager_targets_drone_not_player",DronePursuit.Active(adult.transform));var pursuit=adult.GetComponent<DronePursuit>();Vector3 before=adult.transform.position;float distance=Vector3.Distance(before,new Vector3(g.DronePosition.x,before.y,g.DronePosition.z));pursuit.Step(.2f);Check("villager_moves_towards_drone_ground_position",Vector3.Distance(adult.transform.position,new Vector3(g.DronePosition.x,before.y,g.DronePosition.z))<distance);
+        var rabbit=FindAnyObjectByType<MeadowRabbit>();int rabbitHits=rabbit.MagicHits;Check("crystal_wave_can_affect_rabbit",g.CrystalHitTarget(rabbit.GetComponent<Collider>())&&rabbit.MagicHits==rabbitHits+1);g.CloseDronePanel();Check("closing_drone_releases_remote_control",!g.DeepInputCaptured&&g.Player.Body.enabled&&g.Player.transform.position==player);g.SetPaused(true);
+    }
+}}
